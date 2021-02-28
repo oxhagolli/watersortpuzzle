@@ -1,20 +1,13 @@
-from sys import path
-import time
-from PIL import Image, ImageDraw
 
 class Vial:
     def __init__(self, water=[]):
         self.water = water
-
-    def __repr__(self) -> str:
-        return "Vial(" + str(self.water) + ")"
-
-    def __eq__(self, o: object) -> bool:
+    def __repr__(self):
+        return str(self.water)
+    def __eq__(self, o: object):
         return str(self.water) == str(o.water)
-
-    def __str__(self) -> str:
-        return "Vial(" + str(self.water) + ")"
-    
+    def __str__(self):
+        return str(self.water)
     def size(self):
         return len(self.water)
 
@@ -132,29 +125,28 @@ def is_solved(state):
             return False
     return True
 
-def backtrack(state):
-    stack = [[[0, 0]]]
-    while len(stack) > 0:
-        visited = stack.pop()
-        current = copystate(state)
-        for v in visited:
-            if v == [0, 0]:
+def backtrack(state, path=[]):
+    # Check success
+    if is_solved(state):
+        return True, path
+
+    # Enumerate possibilties
+    possibilities = []
+    for i, item in enumerate(state):
+        for j, other in enumerate(state):
+            if i == j or [j, i, state] in path:
                 continue
-            current[v[0]].drop(current[v[1]])
-        for i, item in enumerate(current):
-            for j, other in enumerate(current):
-                if i == j or [j, i] in visited[-1]:
-                    continue
-                if item.can_move(other):
-                    current[i].drop(current[j])
-                    cpath = copypath(visited)
-                    cpath.append([i, j])
-                    if is_solved(current):
-                        return cpath
-                    stack.append(cpath)
-    return []
+            if item.can_move(other):
+                cstate = copystate(state)
+                cstate[i].drop(cstate[j])
+                cpath = copypath(path)
+                cpath.append([i, j, cstate])
+                possibilities.append(cpath)
+    for poss in possibilities:
+        res = backtrack(poss[-1][2], poss)
+        if res[0]:
+            return res
+    return False, []
 
 
-res = backtrack(state)
-for row in res:
-    print(row)
+print(backtrack(start_state()))
